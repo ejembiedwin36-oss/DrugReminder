@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 
 from database import register_branch as save_branch
 from database import register_hospital as save_hospital
@@ -32,7 +32,7 @@ def register_hospital():
         if hospital_type not in ("private", "government"):
             return "Invalid hospital type.", 400
 
-        save_hospital(
+        hospitals = save_hospital(
             hospital_name=hospital_name,
             hospital_type=hospital_type,
             phone=phone,
@@ -40,15 +40,18 @@ def register_hospital():
             address=address,
         )
 
-        return f"Hospital '{hospital_name}' registered successfully!"
+        if not hospitals:
+            return "Hospital registration failed.", 500
+
+        hospital_id = hospitals[0]["id"]
+        return redirect(url_for("register_branch", hospital_id=hospital_id))
 
     return render_template("register_hospital.html")
 
 
-@app.route("/register-branch", methods=["GET", "POST"])
-def register_branch():
+@app.route("/register-branch/<hospital_id>", methods=["GET", "POST"])
+def register_branch(hospital_id):
     if request.method == "POST":
-        hospital_id = request.form["hospital_id"].strip()
         branch_name = request.form["branch_name"].strip()
         address = request.form["address"].strip()
         phone = request.form.get("phone", "").strip()
@@ -57,8 +60,8 @@ def register_branch():
         information = request.form.get("information", "").strip()
         is_headquarters = request.form.get("is_headquarters") == "true"
 
-        if not hospital_id or not branch_name or not address:
-            return "Hospital ID, branch name, and address are required.", 400
+        if not branch_name or not address:
+            return "Branch name and address are required.", 400
 
         save_branch(
             hospital_id=hospital_id,
@@ -73,7 +76,7 @@ def register_branch():
 
         return f"Branch '{branch_name}' registered successfully!"
 
-    return render_template("register_branch.html")
+    return render_template("register_branch.html", hospital_id=hospital_id)
 
 
 if __name__ == "__main__":
