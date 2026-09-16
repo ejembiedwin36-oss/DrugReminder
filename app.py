@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 
 from database import register_branch as save_branch
+from database import register_department as save_department
 from database import register_hospital as save_hospital
 
 
@@ -77,6 +78,34 @@ def register_branch(hospital_id):
         return f"Branch '{branch_name}' registered successfully!"
 
     return render_template("register_branch.html", hospital_id=hospital_id)
+
+
+@app.route("/register-department/<branch_id>", methods=["GET", "POST"])
+def register_department(branch_id):
+    if request.method == "POST":
+        department_name = request.form["department_name"].strip()
+        department_type = request.form["department_type"].strip().lower()
+        description = request.form.get("description", "").strip()
+
+        if not department_name:
+            return "Department name is required.", 400
+
+        if department_type not in ("ward", "pharmacy", "emergency", "other"):
+            return "Invalid department type.", 400
+
+        departments = save_department(
+            branch_id=branch_id,
+            department_name=department_name,
+            department_type=department_type,
+            description=description or None,
+        )
+
+        if not departments:
+            return "Department registration failed.", 500
+
+        return f"Department '{department_name}' registered successfully!"
+
+    return render_template("register_department.html", branch_id=branch_id)
 
 
 if __name__ == "__main__":
