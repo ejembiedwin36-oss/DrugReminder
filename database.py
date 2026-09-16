@@ -34,3 +34,28 @@ def register_hospital(
 
     response = supabase.table("hospitals").insert(hospital).execute()
     return response.data
+
+
+def register_branch(
+    hospital_id,
+    branch_name,
+    address,
+    is_headquarters=False,
+    phone=None,
+    email=None,
+    location=None,
+    information=None,
+):
+    branch = {
+        "hospital_id": hospital_id,
+        "branch_name": branch_name,
+        "is_headquarters": is_headquarters,
+        "phone": phone,
+        "email": email,
+        "address": address,
+        "location": location,
+        "information": information,
+    }
+
+    response = supabase.table("hospital_branches").insert(branch).execute()
+    return response.data
