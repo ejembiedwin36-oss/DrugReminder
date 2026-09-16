@@ -59,3 +59,20 @@ def register_branch(
 
     response = supabase.table("hospital_branches").insert(branch).execute()
     return response.data
+
+
+def register_department(
+    branch_id,
+    department_name,
+    department_type,
+    description=None,
+):
+    department = {
+        "branch_id": branch_id,
+        "department_name": department_name,
+        "department_type": department_type,
+        "description": description,
+    }
+
+    response = supabase.table("departments").insert(department).execute()
+    return response.data
