@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>DrugReminder Dashboard</title>
+</head>
+<body>
+    <h1>DrugReminder Dashboard</h1>
+
+    <p>You are logged in.</p>
+
+    {% if memberships %}
+        <h2>Your hospital memberships</h2>
+        <ul>
+            {% for membership in memberships %}
+                <li>
+                    {{ membership.hospitals.hospital_name }} — {{ membership.role }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You do not belong to a hospital yet.</p>
+        <p><a href="{{ url_for('register_hospital') }}">Register a hospital</a></p>
+    {% endif %}
+
+    <p><a href="{{ url_for('logout') }}">Log out</a></p>
+</body>
+</html>
