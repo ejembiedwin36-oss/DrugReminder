@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Register Department</title>
+</head>
+
+<body>
+
+    <h1>Register Department</h1>
+
+    <form method="POST">
+
+        <label for="department_name">Department Name:</label>
+        <input type="text" id="department_name" name="department_name" required>
+
+        <label for="department_type">Department Type:</label>
+        <select id="department_type" name="department_type" required>
+            <option value="">Select department type</option>
+            <option value="ward">Ward</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="emergency">Emergency</option>
+            <option value="other">Other</option>
+        </select>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description"></textarea>
+
+        <button type="submit">Register Department</button>
+
+    </form>
+
+</body>
+</html>
