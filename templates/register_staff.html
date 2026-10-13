@@ -3,44 +3,30 @@
 <head>
     <meta charset="utf-8">
     <title>Register Staff</title>
+    <style>
+        .field-error { display: block; margin-top: 5px; font-size: 14px; }
+        .valid-field { border: 2px solid green; }
+        .invalid-field { border: 2px solid red; }
+    </style>
 </head>
-
 <body>
-
     <h1>Register Staff</h1>
 
-    {% if message %}
-        <p>{{ message }}</p>
-    {% endif %}
+    {% if message %}<p>{{ message }}</p>{% endif %}
 
-    <form method="POST">
-
+    <form method="POST" id="staff-form" novalidate>
         <label for="full_name">Full Name:</label>
-        <input
-            type="text"
-            id="full_name"
-            name="full_name"
-            required
-        >
-
+        <input type="text" id="full_name" name="full_name" autocomplete="name" spellcheck="true" required>
+        <small id="full_name_error" class="field-error"></small>
         <br><br>
 
         <label for="staff_id">Staff ID:</label>
-        <input
-            type="text"
-            id="staff_id"
-            name="staff_id"
-            required
-        >
-
+        <input type="text" id="staff_id" name="staff_id" required>
+        <small id="staff_id_error" class="field-error"></small>
         <br><br>
 
         <label for="role">Role:</label>
-        <select
-            id="role"
-            name="role"
-            required
-        >
+        <select id="role" name="role" required>
             <option value="">Select staff role</option>
             <option value="doctor">Doctor</option>
             <option value="nurse">Nurse</option>
@@ -48,76 +34,138 @@
             <option value="staff">Other Staff</option>
             <option value="hospital_admin">Hospital Admin</option>
         </select>
-
+        <small id="role_error" class="field-error"></small>
         <br><br>
 
         <label for="branch_id">Branch:</label>
-        <select
-            id="branch_id"
-            name="branch_id"
-            required
-        >
+        <select id="branch_id" name="branch_id" required>
             {% for branch in branches %}
-                <option
-                    value="{{ branch.id }}"
-                    {% if branch.id == selected_branch_id %}
-                        selected
-                    {% endif %}
-                >
+                <option value="{{ branch.id }}" {% if branch.id == selected_branch_id %}selected{% endif %}>
                     {{ branch.branch_name }}
                 </option>
             {% endfor %}
         </select>
-
+        <small id="branch_id_error" class="field-error"></small>
         <br><br>
 
         <label for="department_id">Department:</label>
-        <select
-            id="department_id"
-            name="department_id"
-        >
+        <select id="department_id" name="department_id">
             <option value="">No department</option>
-
             {% for department in departments %}
-                <option value="{{ department.id }}">
-                    {{ department.department_name }}
-                </option>
+                <option value="{{ department.id }}">{{ department.department_name }}</option>
             {% endfor %}
         </select>
-
         <br><br>
 
         <label for="phone">Phone:</label>
-        <input
-            type="text"
-            id="phone"
-            name="phone"
-        >
-
+        <input type="tel" id="phone" name="phone" autocomplete="tel">
+        <small id="phone_error" class="field-error"></small>
         <br><br>
 
         <label for="email">Email:</label>
-        <input
-            type="email"
-            id="email"
-            name="email"
-        >
-
+        <input type="email" id="email" name="email" autocomplete="email">
+        <small id="email_error" class="field-error"></small>
         <br><br>
 
         <label for="address">Address:</label>
-        <textarea
-            id="address"
-            name="address"
-        ></textarea>
-
+        <textarea id="address" name="address" autocomplete="street-address" spellcheck="true"></textarea>
         <br><br>
 
-        <button type="submit">
-            Register Staff
-        </button>
-
+        <button type="submit">Register Staff</button>
     </form>
 
+    <script>
+        const form = document.getElementById("staff-form");
+        const fullName = document.getElementById("full_name");
+        const staffId = document.getElementById("staff_id");
+        const role = document.getElementById("role");
+        const branch = document.getElementById("branch_id");
+        const phone = document.getElementById("phone");
+        const email = document.getElementById("email");
+
+        function showError(field, message) {
+            const error = document.getElementById(field.id + "_error");
+            field.classList.remove("valid-field");
+            field.classList.add("invalid-field");
+            if (error) error.textContent = message;
+            return false;
+        }
+
+        function showValid(field) {
+            const error = document.getElementById(field.id + "_error");
+            field.classList.remove("invalid-field");
+            field.classList.add("valid-field");
+            if (error) error.textContent = "";
+            return true;
+        }
+
+        function clearValidation(field) {
+            const error = document.getElementById(field.id + "_error");
+            field.classList.remove("invalid-field", "valid-field");
+            if (error) error.textContent = "";
+        }
+
+        function validateFullName() {
+            const value = fullName.value.trim();
+            if (value === "") return showError(fullName, "Full name is required.");
+            if (value.length < 3) return showError(fullName, "Full name is too short.");
+            if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(value)) {
+                return showError(fullName, "Name should contain letters, spaces, apostrophes or hyphens.");
+            }
+            return showValid(fullName);
+        }
+
+        function validateStaffId() {
+            const value = staffId.value.trim();
+            if (value === "") return showError(staffId, "Staff ID is required.");
+            if (value.length < 2) return showError(staffId, "Staff ID is too short.");
+            if (!/^[A-Za-z0-9_-]+$/.test(value)) {
+                return showError(staffId, "Staff ID can only contain letters, numbers, - or _.");
+            }
+            return showValid(staffId);
+        }
+
+        function validateRole() {
+            return role.value === "" ? showError(role, "Please select a staff role.") : showValid(role);
+        }
+
+        function validateBranch() {
+            return branch.value === "" ? showError(branch, "Please select a branch.") : showValid(branch);
+        }
+
+        function validatePhone() {
+            const value = phone.value.trim();
+            if (value === "") { clearValidation(phone); return true; }
+            const cleanedPhone = value.replace(/[\s()-]/g, "");
+            if (!/^0\d{10}$/.test(cleanedPhone) && !/^\+234\d{10}$/.test(cleanedPhone)) {
+                return showError(phone, "Enter a valid phone number, for example 08012345678 or +2348012345678.");
+            }
+            return showValid(phone);
+        }
+
+        function validateEmail() {
+            const value = email.value.trim();
+            if (value === "") { clearValidation(email); return true; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                return showError(email, "Enter a valid email address.");
+            }
+            return showValid(email);
+        }
+
+        fullName.addEventListener("input", validateFullName);
+        staffId.addEventListener("input", validateStaffId);
+        role.addEventListener("change", validateRole);
+        branch.addEventListener("change", validateBranch);
+        phone.addEventListener("input", validatePhone);
+        email.addEventListener("input", validateEmail);
+
+        form.addEventListener("submit", function(event) {
+            const valid = [
+                validateFullName(), validateStaffId(), validateRole(),
+                validateBranch(), validatePhone(), validateEmail()
+            ].every(Boolean);
+            if (!valid) event.preventDefault();
+        });
+    </script>
 </body>
 </html>
