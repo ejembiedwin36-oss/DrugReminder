@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Staff List</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        .success { padding: 12px; margin-bottom: 20px; background-color: #eeeeee; border: 1px solid #999999; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #cccccc; padding: 10px; text-align: left; }
+        th { font-weight: bold; }
+        .actions { margin-bottom: 20px; }
+        .actions a { margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Hospital Staff</h1>
+
+    {% if message %}<div class="success">{{ message }}</div>{% endif %}
+
+    <div class="actions">
+        <a href="{{ url_for('register_staff_route', hospital_id=hospital_id) }}">Register New Staff</a>
+        <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    </div>
+
+    {% if staff_members %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff ID</th><th>Full Name</th><th>Role</th><th>Branch</th>
+                    <th>Department</th><th>Phone</th><th>Email</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_members %}
+                    <tr>
+                        <td>{{ staff.staff_id }}</td>
+                        <td>{{ staff.full_name }}</td>
+                        <td>{{ staff.role | replace('_', ' ') | title }}</td>
+                        <td>{% if staff.hospital_branches %}{{ staff.hospital_branches.branch_name }}{% else %}-{% endif %}</td>
+                        <td>{% if staff.departments %}{{ staff.departments.department_name }}{% else %}No department{% endif %}</td>
+                        <td>{{ staff.phone or '-' }}</td>
+                        <td>{{ staff.email or '-' }}</td>
+                        <td>{% if staff.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No staff members have been registered yet.</p>
+    {% endif %}
+</body>
+</html>
