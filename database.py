@@ -126,7 +126,8 @@ def get_hospital_staff(access_token, refresh_token, hospital_id):
         client.table("staff")
         .select(
             "id, full_name, staff_id, role, phone, email, is_active, "
-            "hospital_branches(branch_name), departments(department_name)"
+            "hospital_branches!staff_branch_id_fkey(branch_name), "
+            "departments!staff_department_id_fkey(department_name)"
         )
         .eq("hospital_id", hospital_id)
         .order("full_name")
