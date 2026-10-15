@@ -3,18 +3,13 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-
-# Load environment variables from the .env file
 load_dotenv()
-
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set")
-
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -131,6 +126,41 @@ def get_hospital_staff(access_token, refresh_token, hospital_id):
         )
         .eq("hospital_id", hospital_id)
         .order("full_name")
+        .execute()
+    )
+    return response.data
+
+
+def get_staff_member(access_token, refresh_token, hospital_id, staff_record_id):
+    """Get one staff member while keeping the query inside the requested hospital."""
+    client = authenticated_client(access_token, refresh_token)
+    response = (
+        client.table("staff")
+        .select(
+            "id, hospital_id, full_name, staff_id, role, phone, email, address, "
+            "is_active, created_at, hospital_branches!staff_branch_id_fkey(branch_name), "
+            "departments!staff_department_id_fkey(department_name)"
+        )
+        .eq("hospital_id", hospital_id)
+        .eq("id", staff_record_id)
+        .limit(1)
+        .execute()
+    )
+    return response.data[0] if response.data else None
+
+
+def get_staff_assignment_history(access_token, refresh_token, hospital_id, staff_record_id):
+    """Get the current and previous branch/department assignments for one staff member."""
+    client = authenticated_client(access_token, refresh_token)
+    response = (
+        client.table("staff_assignments")
+        .select(
+            "id, role, started_at, ended_at, transfer_reason, "
+            "hospital_branches(branch_name), departments(department_name)"
+        )
+        .eq("hospital_id", hospital_id)
+        .eq("staff_id", staff_record_id)
+        .order("started_at", desc=True)
         .execute()
     )
     return response.data
