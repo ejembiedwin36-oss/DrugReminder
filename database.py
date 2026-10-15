@@ -137,7 +137,7 @@ def get_staff_member(access_token, refresh_token, hospital_id, staff_record_id):
     response = (
         client.table("staff")
         .select(
-            "id, hospital_id, full_name, staff_id, role, phone, email, address, "
+            "id, hospital_id, branch_id, department_id, full_name, staff_id, role, phone, email, address, "
             "is_active, created_at, hospital_branches!staff_branch_id_fkey(branch_name), "
             "departments!staff_department_id_fkey(department_name)"
         )
@@ -164,3 +164,15 @@ def get_staff_assignment_history(access_token, refresh_token, hospital_id, staff
         .execute()
     )
     return response.data
+
+
+def transfer_staff(access_token, refresh_token, staff_record_id, branch_id, department_id, role, transfer_reason):
+    """Transfer a staff member atomically through the secure database function."""
+    client = authenticated_client(access_token, refresh_token)
+    return client.rpc("transfer_staff", {
+        "p_staff_id": staff_record_id,
+        "p_branch_id": branch_id,
+        "p_department_id": department_id,
+        "p_role": role,
+        "p_transfer_reason": transfer_reason,
+    }).execute().data
