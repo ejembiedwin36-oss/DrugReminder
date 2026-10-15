@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Staff Details</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        .message { padding: 12px; margin-bottom: 20px; border: 1px solid #999999; }
+        .card { border: 1px solid #cccccc; padding: 20px; margin: 20px 0; }
+        .row { margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #cccccc; padding: 10px; text-align: left; }
+        th { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <p><a href="{{ url_for('staff_list', hospital_id=hospital_id) }}">← Back to Staff List</a></p>
+    <h1>Staff Details</h1>
+
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+
+    {% if staff %}
+        <div class="card">
+            <div class="row"><strong>Staff ID:</strong> {{ staff.staff_id }}</div>
+            <div class="row"><strong>Full Name:</strong> {{ staff.full_name }}</div>
+            <div class="row"><strong>Role:</strong> {{ staff.role | replace('_', ' ') | title }}</div>
+            <div class="row"><strong>Current Branch:</strong> {% if staff.hospital_branches %}{{ staff.hospital_branches.branch_name }}{% else %}-{% endif %}</div>
+            <div class="row"><strong>Current Department:</strong> {% if staff.departments %}{{ staff.departments.department_name }}{% else %}No department{% endif %}</div>
+            <div class="row"><strong>Phone:</strong> {{ staff.phone or '-' }}</div>
+            <div class="row"><strong>Email:</strong> {{ staff.email or '-' }}</div>
+            <div class="row"><strong>Address:</strong> {{ staff.address or '-' }}</div>
+            <div class="row"><strong>Status:</strong> {% if staff.is_active %}Active{% else %}Inactive{% endif %}</div>
+        </div>
+
+        <h2>Assignment History</h2>
+        <p>This history keeps previous assignments instead of deleting them when a staff member moves.</p>
+
+        {% if assignment_history %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Branch</th><th>Department</th><th>Role</th>
+                        <th>Started</th><th>Ended</th><th>Transfer Reason</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignment_history %}
+                        <tr>
+                            <td>{% if assignment.hospital_branches %}{{ assignment.hospital_branches.branch_name }}{% else %}-{% endif %}</td>
+                            <td>{% if assignment.departments %}{{ assignment.departments.department_name }}{% else %}No department{% endif %}</td>
+                            <td>{{ assignment.role | replace('_', ' ') | title }}</td>
+                            <td>{{ assignment.started_at }}</td>
+                            <td>{{ assignment.ended_at or '-' }}</td>
+                            <td>{{ assignment.transfer_reason or '-' }}</td>
+                            <td>{% if assignment.ended_at %}Previous{% else %}Current{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No assignment history is available yet.</p>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
