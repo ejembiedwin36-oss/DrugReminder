@@ -8,6 +8,7 @@
         .message { padding: 12px; margin-bottom: 20px; border: 1px solid #999999; }
         .card { border: 1px solid #cccccc; padding: 20px; margin: 20px 0; }
         .row { margin: 8px 0; }
+        .actions { margin: 20px 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #cccccc; padding: 10px; text-align: left; }
         th { font-weight: bold; }
@@ -30,6 +31,10 @@
             <div class="row"><strong>Email:</strong> {{ staff.email or '-' }}</div>
             <div class="row"><strong>Address:</strong> {{ staff.address or '-' }}</div>
             <div class="row"><strong>Status:</strong> {% if staff.is_active %}Active{% else %}Inactive{% endif %}</div>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('transfer_staff_route', hospital_id=hospital_id, staff_record_id=staff.id) }}">Transfer / Change Assignment</a>
         </div>
 
         <h2>Assignment History</h2>
