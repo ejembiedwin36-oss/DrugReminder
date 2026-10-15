@@ -28,7 +28,7 @@
             <thead>
                 <tr>
                     <th>Staff ID</th><th>Full Name</th><th>Role</th><th>Branch</th>
-                    <th>Department</th><th>Phone</th><th>Email</th><th>Status</th>
+                    <th>Department</th><th>Phone</th><th>Email</th><th>Status</th><th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,6 +42,7 @@
                         <td>{{ staff.phone or '-' }}</td>
                         <td>{{ staff.email or '-' }}</td>
                         <td>{% if staff.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td><a href="{{ url_for('staff_detail', hospital_id=hospital_id, staff_record_id=staff.id) }}">View</a></td>
                     </tr>
                 {% endfor %}
             </tbody>
