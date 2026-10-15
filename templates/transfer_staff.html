@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Transfer Staff</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; max-width: 760px; }
+        label { display: block; margin-top: 16px; font-weight: bold; }
+        select, textarea { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+        textarea { min-height: 100px; }
+        button { margin-top: 20px; padding: 10px 18px; }
+        .message { padding: 12px; margin: 15px 0; border: 1px solid #999; }
+        .help { font-size: 0.9em; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <p><a href="{{ url_for('staff_detail', hospital_id=hospital_id, staff_record_id=staff.id) }}">← Back to Staff Details</a></p>
+    <h1>Transfer Staff</h1>
+    <p><strong>{{ staff.full_name }}</strong> ({{ staff.staff_id }})</p>
+    <p>This action changes the staff member's current assignment while keeping the previous assignment in history.</p>
+
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+
+    <form method="POST" id="transfer-form" novalidate>
+        <label for="branch_id">New Branch</label>
+        <select name="branch_id" id="branch_id" required>
+            {% for branch in branches %}
+                <option value="{{ branch.id }}" {% if branch.id == selected_branch_id %}selected{% endif %}>{{ branch.branch_name }}</option>
+            {% endfor %}
+        </select>
+        <div class="help">Choose the branch where this staff member will now work.</div>
+
+        <label for="department_id">New Department</label>
+        <select name="department_id" id="department_id">
+            <option value="">No department</option>
+            {% for department in departments %}
+                <option value="{{ department.id }}">{{ department.department_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="role">Role</label>
+        <select name="role" id="role" required>
+            {% for role_value, role_name in [('hospital_admin','Hospital Admin'),('doctor','Doctor'),('nurse','Nurse'),('pharmacist','Pharmacist'),('staff','Staff')] %}
+                <option value="{{ role_value }}" {% if staff.role == role_value %}selected{% endif %}>{{ role_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="transfer_reason">Transfer Reason</label>
+        <textarea name="transfer_reason" id="transfer_reason" required minlength="3" placeholder="Example: Reassigned to Emergency Department to support staffing needs."></textarea>
+        <div class="help" id="reason-help">A reason is required so the transfer has an audit history.</div>
+
+        <button type="submit">Complete Transfer</button>
+    </form>
+
+    <script>
+        const reason = document.getElementById('transfer_reason');
+        const help = document.getElementById('reason-help');
+        function validateReason() {
+            const value = reason.value.trim();
+            if (!value) {
+                help.textContent = 'Transfer reason is required.';
+                return false;
+            }
+            if (value.length < 3) {
+                help.textContent = 'Transfer reason must be at least 3 characters.';
+                return false;
+            }
+            help.textContent = 'Transfer reason looks good.';
+            return true;
+        }
+        reason.addEventListener('input', validateReason);
+        document.getElementById('transfer-form').addEventListener('submit', function(event) {
+            if (!validateReason()) event.preventDefault();
+        });
+    </script>
+</body>
+</html>
