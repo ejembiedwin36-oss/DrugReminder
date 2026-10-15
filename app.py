@@ -6,11 +6,15 @@ from database import (
     sign_up, sign_in, register_hospital, register_branch, register_department,
     get_user_memberships, get_hospital_branches, get_branch_departments,
     register_staff, create_staff_assignment, get_hospital_staff,
-    get_staff_member, get_staff_assignment_history,
+    get_staff_member, get_staff_assignment_history, transfer_staff,
 )
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "development-secret-key")
+
+
+def login_tokens():
+    return session.get("access_token"), session.get("refresh_token")
 
 
 @app.route("/")
@@ -59,8 +63,7 @@ def logout():
 
 @app.route("/dashboard")
 def dashboard():
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
     try:
@@ -73,8 +76,7 @@ def dashboard():
 
 @app.route("/register-hospital", methods=["GET", "POST"])
 def register_hospital_route():
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
     message = None
@@ -94,8 +96,7 @@ def register_hospital_route():
 
 @app.route("/register-branch/<hospital_id>", methods=["GET", "POST"])
 def register_branch_route(hospital_id):
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
     message = None
@@ -117,8 +118,7 @@ def register_branch_route(hospital_id):
 
 @app.route("/register-department/<branch_id>", methods=["GET", "POST"])
 def register_department_route(branch_id):
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
     message = None
@@ -136,21 +136,16 @@ def register_department_route(branch_id):
 
 @app.route("/register-staff/<hospital_id>", methods=["GET", "POST"])
 def register_staff_route(hospital_id):
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
-
     message = None
     try:
         branches = get_hospital_branches(access_token, refresh_token, hospital_id)
     except Exception as error:
         return render_template("register_staff.html", hospital_id=hospital_id, branches=[], departments=[], message=str(error))
 
-    selected_branch_id = request.form.get("branch_id")
-    if not selected_branch_id and branches:
-        selected_branch_id = branches[0]["id"]
-
+    selected_branch_id = request.form.get("branch_id") or (branches[0]["id"] if branches else None)
     departments = []
     if selected_branch_id:
         try:
@@ -175,10 +170,7 @@ def register_staff_route(hospital_id):
             message = "Staff member could not be registered."
         except Exception as error:
             error_text = str(error)
-            if "staff_hospital_id_staff_id_key" in error_text or "duplicate key value" in error_text:
-                message = "This Staff ID is already registered. Please use a different Staff ID."
-            else:
-                message = error_text
+            message = "This Staff ID is already registered. Please use a different Staff ID." if "duplicate" in error_text.lower() else error_text
 
     return render_template(
         "register_staff.html", hospital_id=hospital_id, branches=branches,
@@ -188,44 +180,70 @@ def register_staff_route(hospital_id):
 
 @app.route("/staff/<hospital_id>")
 def staff_list(hospital_id):
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
-
     message = "Staff member registered successfully." if request.args.get("registered") == "1" else None
     try:
         staff_members = get_hospital_staff(access_token, refresh_token, hospital_id)
     except Exception as error:
         staff_members = []
         message = f"Could not load staff: {error}"
-
     return render_template("staff_list.html", hospital_id=hospital_id, staff_members=staff_members, message=message)
 
 
 @app.route("/staff/<hospital_id>/<staff_record_id>")
 def staff_detail(hospital_id, staff_record_id):
-    access_token = session.get("access_token")
-    refresh_token = session.get("refresh_token")
+    access_token, refresh_token = login_tokens()
     if not access_token or not refresh_token:
         return redirect(url_for("login"))
-
     try:
         staff_member = get_staff_member(access_token, refresh_token, hospital_id, staff_record_id)
         if not staff_member:
             return "Staff member not found or you do not have access.", 404
-        assignment_history = get_staff_assignment_history(
-            access_token, refresh_token, hospital_id, staff_record_id
-        )
-        return render_template(
-            "staff_detail.html", hospital_id=hospital_id,
-            staff=staff_member, assignment_history=assignment_history,
-        )
+        history = get_staff_assignment_history(access_token, refresh_token, hospital_id, staff_record_id)
+        message = "Staff transfer completed successfully." if request.args.get("transferred") == "1" else None
+        return render_template("staff_detail.html", hospital_id=hospital_id, staff=staff_member, assignment_history=history, message=message)
     except Exception as error:
-        return render_template(
-            "staff_detail.html", hospital_id=hospital_id,
-            staff=None, assignment_history=[], message=f"Could not load staff details: {error}",
-        )
+        return render_template("staff_detail.html", hospital_id=hospital_id, staff=None, assignment_history=[], message=f"Could not load staff details: {error}")
+
+
+@app.route("/staff/<hospital_id>/<staff_record_id>/transfer", methods=["GET", "POST"])
+def transfer_staff_route(hospital_id, staff_record_id):
+    access_token, refresh_token = login_tokens()
+    if not access_token or not refresh_token:
+        return redirect(url_for("login"))
+    try:
+        staff_member = get_staff_member(access_token, refresh_token, hospital_id, staff_record_id)
+        if not staff_member:
+            return "Staff member not found or you do not have access.", 404
+        branches = get_hospital_branches(access_token, refresh_token, hospital_id)
+    except Exception as error:
+        return str(error), 400
+
+    selected_branch_id = request.form.get("branch_id") or staff_member.get("branch_id")
+    departments = get_branch_departments(access_token, refresh_token, selected_branch_id) if selected_branch_id else []
+    message = None
+
+    if request.method == "POST":
+        reason = (request.form.get("transfer_reason") or "").strip()
+        if not reason:
+            message = "Please enter a reason for the transfer."
+        else:
+            try:
+                transfer_staff(
+                    access_token, refresh_token, staff_record_id, selected_branch_id,
+                    request.form.get("department_id") or None, request.form.get("role"), reason,
+                )
+                return redirect(url_for("staff_detail", hospital_id=hospital_id, staff_record_id=staff_record_id, transferred="1"))
+            except Exception as error:
+                message = str(error)
+
+    return render_template(
+        "transfer_staff.html", hospital_id=hospital_id, staff=staff_member,
+        branches=branches, departments=departments,
+        selected_branch_id=selected_branch_id, message=message,
+    )
 
 
 if __name__ == "__main__":
