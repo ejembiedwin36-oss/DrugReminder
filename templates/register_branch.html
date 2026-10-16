@@ -3,38 +3,121 @@
 <head>
     <meta charset="utf-8">
     <title>Register Hospital Branch</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; max-width: 760px; }
+        label { display: block; margin-top: 16px; font-weight: bold; }
+        input[type="text"], input[type="tel"], input[type="email"], textarea {
+            width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box;
+        }
+        textarea { min-height: 100px; }
+        .checkbox-row { margin-top: 18px; }
+        .checkbox-row label { display: inline; margin-left: 6px; font-weight: normal; }
+        .help { display: block; margin-top: 5px; font-size: 0.9em; }
+        .valid { border: 2px solid #2e7d32; }
+        .invalid { border: 2px solid #b00020; }
+        .message { padding: 12px; margin: 15px 0; border: 1px solid #b00020; }
+        button { margin-top: 20px; padding: 10px 18px; }
+    </style>
 </head>
-
 <body>
-
+    <p><a href="{{ url_for('dashboard') }}">← Back to Dashboard</a></p>
     <h1>Register Hospital Branch</h1>
+    <p>Create a branch that belongs to this hospital. Required fields are checked while you type.</p>
 
-    <form method="POST">
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
 
-        <label for="branch_name">Branch Name:</label>
-        <input type="text" id="branch_name" name="branch_name" required>
+    <form method="POST" id="branch-form" novalidate>
+        <label for="branch_name">Branch Name</label>
+        <input type="text" id="branch_name" name="branch_name" value="{{ request.form.get('branch_name', '') }}" required minlength="2" spellcheck="true">
+        <small class="help" id="branch-name-help">Enter the official branch name.</small>
 
-        <label for="is_headquarters">Is this the headquarters?</label>
-        <input type="checkbox" id="is_headquarters" name="is_headquarters" value="true">
+        <div class="checkbox-row">
+            <input type="checkbox" id="is_headquarters" name="is_headquarters" {% if request.form.get('is_headquarters') %}checked{% endif %}>
+            <label for="is_headquarters">This branch is the hospital headquarters</label>
+        </div>
 
-        <label for="phone">Phone:</label>
-        <input type="tel" id="phone" name="phone">
+        <label for="phone">Phone</label>
+        <input type="tel" id="phone" name="phone" value="{{ request.form.get('phone', '') }}" placeholder="08012345678 or +2348012345678">
+        <small class="help" id="phone-help">Optional. Enter a Nigerian phone number if available.</small>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ request.form.get('email', '') }}" autocomplete="email">
+        <small class="help" id="email-help">Optional. Enter a valid email address if available.</small>
 
-        <label for="address">Address:</label>
-        <input type="text" id="address" name="address" required>
+        <label for="address">Address</label>
+        <input type="text" id="address" name="address" value="{{ request.form.get('address', '') }}" required minlength="3" spellcheck="true">
+        <small class="help" id="address-help">Enter the physical address of the branch.</small>
 
-        <label for="location">Location:</label>
-        <input type="text" id="location" name="location">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" value="{{ request.form.get('location', '') }}" spellcheck="true" placeholder="Example: Otukpo, Benue State">
+        <small class="help">Optional location description.</small>
 
-        <label for="information">Information:</label>
-        <textarea id="information" name="information"></textarea>
+        <label for="information">Information</label>
+        <textarea id="information" name="information" spellcheck="true" placeholder="Optional notes about this branch.">{{ request.form.get('information', '') }}</textarea>
 
         <button type="submit">Register Branch</button>
-
     </form>
 
+    <script>
+        const form = document.getElementById('branch-form');
+        const branchName = document.getElementById('branch_name');
+        const phone = document.getElementById('phone');
+        const email = document.getElementById('email');
+        const address = document.getElementById('address');
+
+        function setState(field, help, valid, validText, invalidText) {
+            field.classList.toggle('valid', valid);
+            field.classList.toggle('invalid', !valid);
+            help.textContent = valid ? validText : invalidText;
+            return valid;
+        }
+
+        function validateBranchName() {
+            const value = branchName.value.trim();
+            return setState(branchName, document.getElementById('branch-name-help'), value.length >= 2,
+                'Branch name looks good.', 'Branch name must contain at least 2 characters.');
+        }
+
+        function validatePhone() {
+            const raw = phone.value.trim();
+            if (!raw) {
+                phone.classList.remove('valid', 'invalid');
+                document.getElementById('phone-help').textContent = 'Optional. Enter a Nigerian phone number if available.';
+                return true;
+            }
+            const cleaned = raw.replace(/[\s()-]/g, '');
+            const valid = /^0\d{10}$/.test(cleaned) || /^\+234\d{10}$/.test(cleaned);
+            return setState(phone, document.getElementById('phone-help'), valid,
+                'Phone number looks good.', 'Use 11 digits starting with 0, or +234 followed by 10 digits.');
+        }
+
+        function validateEmail() {
+            const value = email.value.trim();
+            if (!value) {
+                email.classList.remove('valid', 'invalid');
+                document.getElementById('email-help').textContent = 'Optional. Enter a valid email address if available.';
+                return true;
+            }
+            const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            return setState(email, document.getElementById('email-help'), valid,
+                'Email address looks good.', 'Enter a valid email address, for example branch@example.com.');
+        }
+
+        function validateAddress() {
+            const value = address.value.trim();
+            return setState(address, document.getElementById('address-help'), value.length >= 3,
+                'Address looks good.', 'Address must contain at least 3 characters.');
+        }
+
+        branchName.addEventListener('input', validateBranchName);
+        phone.addEventListener('input', validatePhone);
+        email.addEventListener('input', validateEmail);
+        address.addEventListener('input', validateAddress);
+
+        form.addEventListener('submit', function(event) {
+            const valid = validateBranchName() && validatePhone() && validateEmail() && validateAddress();
+            if (!valid) event.preventDefault();
+        });
+    </script>
 </body>
 </html>
