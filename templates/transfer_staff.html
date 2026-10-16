@@ -32,9 +32,9 @@
 
         <label for="department_id">New Department</label>
         <select name="department_id" id="department_id">
-            <option value="">No department</option>
+            <option value="" {% if not staff.department_id %}selected{% endif %}>No department</option>
             {% for department in departments %}
-                <option value="{{ department.id }}">{{ department.department_name }}</option>
+                <option value="{{ department.id }}" {% if department.id == staff.department_id %}selected{% endif %}>{{ department.department_name }}</option>
             {% endfor %}
         </select>
 
@@ -55,6 +55,7 @@
     <script>
         const reason = document.getElementById('transfer_reason');
         const help = document.getElementById('reason-help');
+
         function validateReason() {
             const value = reason.value.trim();
             if (!value) {
@@ -68,6 +69,7 @@
             help.textContent = 'Transfer reason looks good.';
             return true;
         }
+
         reason.addEventListener('input', validateReason);
         document.getElementById('transfer-form').addEventListener('submit', function(event) {
             if (!validateReason()) event.preventDefault();
