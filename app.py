@@ -221,9 +221,22 @@ def transfer_staff_route(hospital_id, staff_record_id):
     except Exception as error:
         return str(error), 400
 
-    selected_branch_id = request.form.get("branch_id") or staff_member.get("branch_id")
-    departments = get_branch_departments(access_token, refresh_token, selected_branch_id) if selected_branch_id else []
-    message = None
+    selected_branch_id = (
+        request.form.get("branch_id")
+        or request.args.get("branch_id")
+        or staff_member.get("branch_id")
+    )
+
+    try:
+        departments = (
+            get_branch_departments(access_token, refresh_token, selected_branch_id)
+            if selected_branch_id else []
+        )
+    except Exception as error:
+        departments = []
+        message = f"Could not load departments: {error}"
+    else:
+        message = None
 
     if request.method == "POST":
         reason = (request.form.get("transfer_reason") or "").strip()
