@@ -1,27 +1,37 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>DrugReminder Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        .hospital-card { border: 1px solid #cccccc; padding: 18px; margin: 18px 0; max-width: 700px; }
+        .actions { margin-top: 14px; }
+        .actions a { display: inline-block; margin-right: 12px; padding: 8px 12px; border: 1px solid #777777; text-decoration: none; }
+    </style>
 </head>
 <body>
     <h1>DrugReminder Dashboard</h1>
-
     <p>You are logged in.</p>
 
     {% if memberships %}
         <h2>Your hospital memberships</h2>
-        <ul>
-            {% for membership in memberships %}
-                <li>
-                    {{ membership.hospitals.hospital_name }} — {{ membership.role }}
-                </li>
-            {% endfor %}
-        </ul>
+        {% for membership in memberships %}
+            <div class="hospital-card">
+                <h3>{{ membership.hospitals.hospital_name }}</h3>
+                <p><strong>Role:</strong> {{ membership.role | replace('_', ' ') | title }}</p>
+
+                <div class="actions">
+                    <a href="{{ url_for('staff_list', hospital_id=membership.hospital_id) }}">View Staff</a>
+                    {% if membership.role == 'hospital_admin' %}
+                        <a href="{{ url_for('register_staff_route', hospital_id=membership.hospital_id) }}">Register Staff</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
     {% else %}
         <p>You do not belong to a hospital yet.</p>
-        <p><a href="{{ url_for('register_hospital') }}">Register a hospital</a></p>
+        <p><a href="{{ url_for('register_hospital_route') }}">Register a hospital</a></p>
     {% endif %}
 
     <p><a href="{{ url_for('logout') }}">Log out</a></p>
