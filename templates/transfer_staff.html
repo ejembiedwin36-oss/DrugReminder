@@ -9,7 +9,7 @@
         select, textarea { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
         textarea { min-height: 100px; }
         button { margin-top: 20px; padding: 10px 18px; }
-        .message { padding: 12px; margin: 15px 0; border: 1px solid #999; }
+        .message { padding: 12px; margin: 15px 0; border: 1px solid #b00020; }
         .help { font-size: 0.9em; margin-top: 5px; }
     </style>
 </head>
@@ -19,7 +19,7 @@
     <p><strong>{{ staff.full_name }}</strong> ({{ staff.staff_id }})</p>
     <p>This action changes the staff member's current assignment while keeping the previous assignment in history.</p>
 
-    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+    {% if message %}<div class="message"><strong>Transfer not completed:</strong> {{ message }}</div>{% endif %}
 
     <form method="POST" id="transfer-form" novalidate>
         <label for="branch_id">New Branch</label>
@@ -30,23 +30,25 @@
         </select>
         <div class="help">Choose the branch where this staff member will now work.</div>
 
+        {% set chosen_department = request.form.get('department_id') if request.method == 'POST' else staff.department_id %}
         <label for="department_id">New Department</label>
         <select name="department_id" id="department_id">
-            <option value="" {% if not staff.department_id %}selected{% endif %}>No department</option>
+            <option value="" {% if not chosen_department %}selected{% endif %}>No department</option>
             {% for department in departments %}
-                <option value="{{ department.id }}" {% if department.id == staff.department_id %}selected{% endif %}>{{ department.department_name }}</option>
+                <option value="{{ department.id }}" {% if department.id == chosen_department %}selected{% endif %}>{{ department.department_name }}</option>
             {% endfor %}
         </select>
 
+        {% set chosen_role = request.form.get('role') if request.method == 'POST' else staff.role %}
         <label for="role">Role</label>
         <select name="role" id="role" required>
             {% for role_value, role_name in [('hospital_admin','Hospital Admin'),('doctor','Doctor'),('nurse','Nurse'),('pharmacist','Pharmacist'),('staff','Staff')] %}
-                <option value="{{ role_value }}" {% if staff.role == role_value %}selected{% endif %}>{{ role_name }}</option>
+                <option value="{{ role_value }}" {% if chosen_role == role_value %}selected{% endif %}>{{ role_name }}</option>
             {% endfor %}
         </select>
 
         <label for="transfer_reason">Transfer Reason</label>
-        <textarea name="transfer_reason" id="transfer_reason" required minlength="3" placeholder="Example: Reassigned to Emergency Department to support staffing needs."></textarea>
+        <textarea name="transfer_reason" id="transfer_reason" required minlength="3" placeholder="Example: Reassigned to Emergency Department to support staffing needs.">{{ request.form.get('transfer_reason', '') }}</textarea>
         <div class="help" id="reason-help">A reason is required so the transfer has an audit history.</div>
 
         <button type="submit">Complete Transfer</button>
@@ -72,8 +74,14 @@
 
         reason.addEventListener('input', validateReason);
         document.getElementById('transfer-form').addEventListener('submit', function(event) {
-            if (!validateReason()) event.preventDefault();
+            if (!validateReason()) {
+                event.preventDefault();
+            }
         });
+
+        if (reason.value.trim()) {
+            validateReason();
+        }
     </script>
 </body>
 </html>
