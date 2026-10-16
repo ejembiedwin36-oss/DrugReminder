@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register Patient - DrugReminder</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f7f7f7; }
+        .card { max-width: 720px; margin: auto; background: white; padding: 24px; border: 1px solid #ddd; border-radius: 8px; }
+        label { display: block; margin-top: 16px; font-weight: bold; }
+        input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px; margin-top: 6px; }
+        textarea { min-height: 90px; resize: vertical; }
+        .help { display: block; margin-top: 5px; font-size: 0.9rem; }
+        .valid { color: #176b2c; }
+        .invalid { color: #a51d1d; }
+        .message { padding: 10px; margin-bottom: 16px; border: 1px solid #c66; background: #fff2f2; }
+        button { margin-top: 22px; padding: 10px 18px; cursor: pointer; }
+        .privacy { margin: 16px 0; padding: 12px; background: #f2f5f8; border-left: 4px solid #777; }
+        .back { margin-top: 18px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Register Patient</h1>
+    <p>Create the patient's record and assign the patient to their current branch.</p>
+
+    <div class="privacy">
+        <strong>Privacy:</strong> Patient information is branch-scoped. Other branches do not automatically receive access to this patient's details.
+    </div>
+
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
+
+    <form method="post" id="patient-form" novalidate>
+        <label for="branch_id">Current Branch *</label>
+        <select id="branch_id" name="branch_id" required>
+            <option value="">Choose a branch</option>
+            {% for branch in branches %}
+                <option value="{{ branch.id }}" {% if request.form.get('branch_id') == branch.id %}selected{% endif %}>{{ branch.branch_name }}</option>
+            {% endfor %}
+        </select>
+        <span id="branch-help" class="help">Choose the branch currently caring for the patient.</span>
+
+        <label for="patient_number">Patient Number *</label>
+        <input id="patient_number" name="patient_number" value="{{ request.form.get('patient_number', '') }}" maxlength="50" required>
+        <span id="number-help" class="help">Enter the hospital's patient number/ID.</span>
+
+        <label for="full_name">Full Name *</label>
+        <input id="full_name" name="full_name" value="{{ request.form.get('full_name', '') }}" maxlength="150" required>
+        <span id="name-help" class="help">Enter the patient's full name.</span>
+
+        <label for="date_of_birth">Date of Birth</label>
+        <input id="date_of_birth" name="date_of_birth" type="date" value="{{ request.form.get('date_of_birth', '') }}">
+        <span id="dob-help" class="help">Date of birth cannot be in the future.</span>
+
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" value="{{ request.form.get('phone', '') }}" maxlength="30">
+        <span id="phone-help" class="help">Optional contact number.</span>
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{ request.form.get('email', '') }}" maxlength="254">
+        <span id="email-help" class="help">Optional email address.</span>
+
+        <label for="address">Address</label>
+        <textarea id="address" name="address" maxlength="500">{{ request.form.get('address', '') }}</textarea>
+        <span class="help">Optional current address.</span>
+
+        <button type="submit">Register Patient</button>
+    </form>
+
+    <p class="back"><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+</div>
+
+<script>
+const form = document.getElementById('patient-form');
+const branch = document.getElementById('branch_id');
+const number = document.getElementById('patient_number');
+const fullName = document.getElementById('full_name');
+const dob = document.getElementById('date_of_birth');
+const phone = document.getElementById('phone');
+const email = document.getElementById('email');
+
+function show(id, text, valid) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'help ' + (valid ? 'valid' : 'invalid');
+}
+
+function validateBranch() {
+    const ok = branch.value !== '';
+    show('branch-help', ok ? 'Branch selected.' : 'Please choose the patient’s current branch.', ok);
+    return ok;
+}
+
+function validateNumber() {
+    const value = number.value.trim();
+    const ok = value.length >= 2;
+    show('number-help', ok ? 'Patient number looks good.' : 'Patient number must contain at least 2 characters.', ok);
+    return ok;
+}
+
+function validateName() {
+    const value = fullName.value.trim();
+    const ok = value.length >= 2;
+    show('name-help', ok ? 'Patient name looks good.' : 'Full name must contain at least 2 characters.', ok);
+    return ok;
+}
+
+function validateDob() {
+    if (!dob.value) {
+        document.getElementById('dob-help').className = 'help';
+        document.getElementById('dob-help').textContent = 'Date of birth cannot be in the future.';
+        return true;
+    }
+    const chosen = new Date(dob.value + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const ok = chosen <= today;
+    show('dob-help', ok ? 'Date of birth looks good.' : 'Date of birth cannot be in the future.', ok);
+    return ok;
+}
+
+function validatePhone() {
+    const value = phone.value.trim();
+    if (!value) {
+        document.getElementById('phone-help').className = 'help';
+        document.getElementById('phone-help').textContent = 'Optional contact number.';
+        return true;
+    }
+    const ok = /^[0-9+()\-\s]{7,30}$/.test(value);
+    show('phone-help', ok ? 'Phone number format looks good.' : 'Use a valid phone-number format.', ok);
+    return ok;
+}
+
+function validateEmail() {
+    const value = email.value.trim();
+    if (!value) {
+        document.getElementById('email-help').className = 'help';
+        document.getElementById('email-help').textContent = 'Optional email address.';
+        return true;
+    }
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    show('email-help', ok ? 'Email format looks good.' : 'Enter a valid email address.', ok);
+    return ok;
+}
+
+branch.addEventListener('change', validateBranch);
+number.addEventListener('input', validateNumber);
+fullName.addEventListener('input', validateName);
+dob.addEventListener('change', validateDob);
+phone.addEventListener('input', validatePhone);
+email.addEventListener('input', validateEmail);
+
+form.addEventListener('submit', function (event) {
+    const ok = [validateBranch(), validateNumber(), validateName(), validateDob(), validatePhone(), validateEmail()].every(Boolean);
+    if (!ok) event.preventDefault();
+});
+</script>
+</body>
+</html>
