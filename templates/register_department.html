@@ -3,54 +3,77 @@
 <head>
     <meta charset="utf-8">
     <title>Register Department</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; max-width: 760px; }
+        label { display: block; margin-top: 16px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+        textarea { min-height: 100px; }
+        .help { display: block; margin-top: 5px; font-size: 0.9em; }
+        .valid { border: 2px solid #2e7d32; }
+        .invalid { border: 2px solid #b00020; }
+        .message { padding: 12px; margin: 15px 0; border: 1px solid #999999; }
+        button { margin-top: 20px; padding: 10px 18px; }
+    </style>
 </head>
-
 <body>
-
     <h1>Register Department</h1>
+    <p>Create a department for this hospital branch. Required fields are checked immediately.</p>
 
-    {% if message %}
-        <p>{{ message }}</p>
-    {% endif %}
+    {% if message %}<div class="message">{{ message }}</div>{% endif %}
 
-    <form method="POST">
+    <form method="POST" id="department-form" novalidate>
+        <label for="department_name">Department Name</label>
+        <input type="text" id="department_name" name="department_name"
+               value="{{ request.form.get('department_name', '') }}" required minlength="2" spellcheck="true">
+        <small class="help" id="name-help">Enter the department name.</small>
 
-        <label for="department_name">Department Name:</label>
-        <input
-            type="text"
-            id="department_name"
-            name="department_name"
-            required
-        >
-
-        <br><br>
-
-        <label for="department_type">Department Type:</label>
-        <select
-            id="department_type"
-            name="department_type"
-            required
-        >
+        <label for="department_type">Department Type</label>
+        <select id="department_type" name="department_type" required>
             <option value="">Select department type</option>
-            <option value="ward">Ward</option>
-            <option value="pharmacy">Pharmacy</option>
-            <option value="emergency">Emergency</option>
-            <option value="other">Other</option>
+            <option value="ward" {% if request.form.get('department_type') == 'ward' %}selected{% endif %}>Ward</option>
+            <option value="pharmacy" {% if request.form.get('department_type') == 'pharmacy' %}selected{% endif %}>Pharmacy</option>
+            <option value="emergency" {% if request.form.get('department_type') == 'emergency' %}selected{% endif %}>Emergency</option>
+            <option value="other" {% if request.form.get('department_type') == 'other' %}selected{% endif %}>Other</option>
         </select>
+        <small class="help" id="type-help">Choose the type that best describes this department.</small>
 
-        <br><br>
-
-        <label for="description">Description:</label>
-        <textarea
-            id="description"
-            name="description"
-        ></textarea>
-
-        <br><br>
+        <label for="description">Description</label>
+        <textarea id="description" name="description" spellcheck="true"
+                  placeholder="Optional description of this department.">{{ request.form.get('description', '') }}</textarea>
 
         <button type="submit">Register Department</button>
-
     </form>
 
+    <script>
+        const form = document.getElementById('department-form');
+        const nameField = document.getElementById('department_name');
+        const typeField = document.getElementById('department_type');
+        const nameHelp = document.getElementById('name-help');
+        const typeHelp = document.getElementById('type-help');
+
+        function validateName() {
+            const valid = nameField.value.trim().length >= 2;
+            nameField.classList.toggle('valid', valid);
+            nameField.classList.toggle('invalid', !valid);
+            nameHelp.textContent = valid ? 'Department name looks good.' : 'Department name must contain at least 2 characters.';
+            return valid;
+        }
+
+        function validateType() {
+            const valid = typeField.value !== '';
+            typeField.classList.toggle('valid', valid);
+            typeField.classList.toggle('invalid', !valid);
+            typeHelp.textContent = valid ? 'Department type selected.' : 'Please select a department type.';
+            return valid;
+        }
+
+        nameField.addEventListener('input', validateName);
+        typeField.addEventListener('change', validateType);
+
+        form.addEventListener('submit', function(event) {
+            const valid = validateName() && validateType();
+            if (!valid) event.preventDefault();
+        });
+    </script>
 </body>
 </html>
