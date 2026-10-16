@@ -7,7 +7,7 @@
         body { font-family: Arial, sans-serif; margin: 30px; }
         .hospital-card { border: 1px solid #cccccc; padding: 18px; margin: 18px 0; max-width: 700px; }
         .actions { margin-top: 14px; }
-        .actions a { display: inline-block; margin-right: 12px; padding: 8px 12px; border: 1px solid #777777; text-decoration: none; }
+        .actions a { display: inline-block; margin: 0 12px 10px 0; padding: 8px 12px; border: 1px solid #777777; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -25,6 +25,7 @@
                     <a href="{{ url_for('staff_list', hospital_id=membership.hospital_id) }}">View Staff</a>
                     {% if membership.role == 'hospital_admin' %}
                         <a href="{{ url_for('register_staff_route', hospital_id=membership.hospital_id) }}">Register Staff</a>
+                        <a href="{{ url_for('register_branch_route', hospital_id=membership.hospital_id) }}">Register Branch</a>
                     {% endif %}
                 </div>
             </div>
