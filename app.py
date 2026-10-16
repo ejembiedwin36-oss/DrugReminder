@@ -7,6 +7,7 @@ from database import (
     get_user_memberships, get_hospital_branches, get_branch_departments,
     register_staff, create_staff_assignment, get_hospital_staff,
     get_staff_member, get_staff_assignment_history, transfer_staff,
+    register_patient,
 )
 
 app = Flask(__name__)
@@ -221,17 +222,10 @@ def transfer_staff_route(hospital_id, staff_record_id):
     except Exception as error:
         return str(error), 400
 
-    selected_branch_id = (
-        request.form.get("branch_id")
-        or request.args.get("branch_id")
-        or staff_member.get("branch_id")
-    )
+    selected_branch_id = request.form.get("branch_id") or request.args.get("branch_id") or staff_member.get("branch_id")
 
     try:
-        departments = (
-            get_branch_departments(access_token, refresh_token, selected_branch_id)
-            if selected_branch_id else []
-        )
+        departments = get_branch_departments(access_token, refresh_token, selected_branch_id) if selected_branch_id else []
     except Exception as error:
         departments = []
         message = f"Could not load departments: {error}"
@@ -257,6 +251,52 @@ def transfer_staff_route(hospital_id, staff_record_id):
         branches=branches, departments=departments,
         selected_branch_id=selected_branch_id, message=message,
     )
+
+
+@app.route("/register-patient/<hospital_id>", methods=["GET", "POST"])
+def register_patient_route(hospital_id):
+    access_token, refresh_token = login_tokens()
+    if not access_token or not refresh_token:
+        return redirect(url_for("login"))
+
+    try:
+        branches = get_hospital_branches(access_token, refresh_token, hospital_id)
+    except Exception as error:
+        return render_template("register_patient.html", hospital_id=hospital_id, branches=[], message=str(error))
+
+    message = None
+    if request.method == "POST":
+        branch_id = request.form.get("branch_id")
+        patient_number = (request.form.get("patient_number") or "").strip()
+        full_name = (request.form.get("full_name") or "").strip()
+        date_of_birth = request.form.get("date_of_birth") or None
+
+        if not branch_id:
+            message = "Please choose the patient's current branch."
+        elif len(patient_number) < 2:
+            message = "Patient number must contain at least 2 characters."
+        elif len(full_name) < 2:
+            message = "Patient full name must contain at least 2 characters."
+        else:
+            try:
+                register_patient(
+                    access_token, refresh_token, hospital_id, branch_id,
+                    patient_number, full_name, date_of_birth,
+                    request.form.get("phone"), request.form.get("email"),
+                    request.form.get("address"),
+                )
+                return redirect(url_for("register_patient_route", hospital_id=hospital_id, registered="1"))
+            except Exception as error:
+                error_text = str(error)
+                if "duplicate" in error_text.lower() or "patients_hospital_id_patient_number_key" in error_text:
+                    message = "This Patient Number is already registered for this hospital."
+                else:
+                    message = error_text
+
+    if request.args.get("registered") == "1":
+        message = "Patient registered successfully."
+
+    return render_template("register_patient.html", hospital_id=hospital_id, branches=branches, message=message)
 
 
 if __name__ == "__main__":
