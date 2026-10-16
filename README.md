@@ -2,85 +2,48 @@
 
 DrugReminder is a hospital medication-management and care-coordination web application built with Python, Flask, Supabase and PostgreSQL.
 
-The project is being designed for hospitals that need a structured way to manage branches, departments, staff, patients and medication activities while keeping each hospital's data separate and secure.
+The project is designed for hospitals that need a structured way to manage branches, departments, staff, patients and medication activities while keeping each hospital's data separate and secure.
 
-> **Project status:** Active development. The hospital/staff foundation is being built first. Patient management and the complete medication reminder, confirmation, missed-task and escalation workflows are still under development.
-
-## Table of Contents
-
-- [What DrugReminder Does](#what-drugreminder-does)
-- [Main Goals](#main-goals)
-- [Current Features](#current-features)
-- [Planned Features](#planned-features)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Environment Variables](#environment-variables)
-- [How to Run the Application](#how-to-run-the-application)
-- [Basic Application Flow](#basic-application-flow)
-- [Database and Supabase](#database-and-supabase)
-- [Security](#security)
-- [Development Workflow](#development-workflow)
-- [Troubleshooting](#troubleshooting)
-- [Project Documentation](#project-documentation)
+> **Project status:** Active development. The hospital and staff-management foundation is working, including a tested staff transfer/history workflow. Patient management and the complete medication reminder, confirmation, missed-task and escalation workflows are still under development.
 
 ## What DrugReminder Does
 
-DrugReminder is intended to help hospitals organize medication-related responsibilities and follow-up.
+DrugReminder is intended to help hospitals organize medication-related responsibilities and follow-up. The finished workflow is intended to answer questions such as which patient needs medication, what should be administered, when it is due, who is responsible, whether it was confirmed, and what happens when a task is missed.
 
-The finished workflow is intended to answer important questions such as:
-
-- Which patient needs medication?
-- What medication should be administered?
-- When should it be administered?
-- Which nurse or caregiver is responsible?
-- Was the medication confirmed as administered?
-- What happens if the task is missed or not confirmed?
-- Who should be notified or assigned next?
-
-DrugReminder is a multi-hospital system. A hospital may have several branches, but a completely different hospital remains a separate organization and should not have access to another hospital's private information.
-
-## Main Goals
-
-The project aims to provide:
-
-- hospital and branch management;
-- department management;
-- staff management and assignment history;
-- patient management;
-- medication scheduling;
-- medication reminders and alerts;
-- administration confirmation;
-- missed/not-confirmed task handling;
-- nurse reassignment and escalation;
-- doctor and nurse workflows;
-- audit/history records;
-- secure separation of hospital data.
+DrugReminder is a multi-hospital system. One hospital may have several branches, while a completely different hospital remains a separate organization and should not have access to another hospital's private information.
 
 ## Current Features
 
-The project currently includes or has begun implementing:
+The project currently includes:
 
-- Flask web application;
-- Supabase authentication integration;
-- hospital registration;
+- Flask web application and Supabase authentication;
+- hospital registration and hospital membership handling;
 - hospital branch registration;
 - department registration;
-- hospital membership handling;
-- staff registration;
-- staff assignment records;
-- hospital staff listing;
-- duplicate Staff ID protection;
-- live validation on the staff registration form;
+- staff registration and duplicate Staff ID protection;
+- hospital staff listing and individual staff detail pages;
+- current branch, department and role information;
+- staff assignment history;
+- hospital-admin initiated staff transfer/change of assignment;
+- preservation of the previous assignment after a transfer;
+- transfer reason/audit information;
+- branch-aware department selection during transfers;
+- live validation on important registration/transfer forms;
 - PostgreSQL/Supabase data storage;
-- Row Level Security policies for hospital data isolation.
+- Row Level Security and database authorization rules for hospital isolation.
+
+### Staff transfer workflow — tested
+
+The transfer workflow has been tested end to end. A hospital administrator can choose a new branch, choose a department belonging to that branch, keep or change the staff role, enter a transfer reason, and complete the reassignment.
+
+The database preserves the previous assignment instead of deleting it. The old assignment receives an end time and becomes `Previous`; the new assignment becomes `Current`.
+
+During testing, changing the branch initially left the old branch's department visible. This was fixed so changing the branch reloads the department list and only shows departments belonging to the selected branch.
 
 ## Planned Features
 
 Major features still being developed include:
 
-- complete staff transfer/history workflow;
 - patient registration and management;
 - doctor-to-patient relationships;
 - medication and dosage management;
@@ -88,14 +51,13 @@ Major features still being developed include:
 - five-minute pre-notifications;
 - scheduled-time medication alerts;
 - nurse administration confirmation;
-- missed/not-confirmed medication tracking;
-- reason capture;
+- missed/not-confirmed medication tracking and reason capture;
 - doctor/Head Nurse escalation;
-- automatic nurse reassignment based on availability, workload and location;
+- nurse task reassignment based on permitted operational factors such as availability, workload and location;
 - authorized rescheduling while preserving the original missed record;
 - patient emergency and normal/home-delivery requests;
 - role-specific dashboards;
-- complete audit trail;
+- broader audit trail and reporting;
 - production-ready user interface;
 - automated testing and deployment.
 
@@ -111,11 +73,9 @@ Major features still being developed include:
 | CSS | User-interface styling |
 | JavaScript | Browser-side behavior and live validation |
 | Git | Source-control/version history |
-| GitHub | Remote repository and project backup/collaboration |
+| GitHub | Remote repository and collaboration |
 
 ## Project Structure
-
-The structure will continue to grow as new features are implemented.
 
 ```text
 DrugReminder/
@@ -135,89 +95,40 @@ DrugReminder/
     ├── register_branch.html
     ├── register_department.html
     ├── register_staff.html
-    └── staff_list.html
+    ├── staff_list.html
+    ├── staff_detail.html
+    └── transfer_staff.html
 ```
 
 ### Important files
 
-**`app.py`** — Main Flask application. It contains routes that receive browser requests, process forms, call database functions and render/redirect pages.
+**`app.py`** — Main Flask application. It contains routes that receive browser requests, process forms, call database functions and render/redirect pages. It also contains the current staff-list, staff-detail and transfer routes.
 
-**`database.py`** — Contains functions used by the Flask application to communicate with Supabase.
+**`database.py`** — Contains functions used by Flask to communicate with Supabase, including staff retrieval, assignment-history retrieval and the secure staff-transfer RPC call.
 
-**`templates/`** — Contains the HTML templates rendered by Flask.
+**`templates/transfer_staff.html`** — Staff transfer form. Changing the branch refreshes the page with departments belonging to that selected branch. It also validates the transfer reason while the administrator types.
 
-**`requirements.txt`** — Lists the Python packages required to run the application.
+**`templates/staff_detail.html`** — Displays the staff member's current information and assignment history, including Current/Previous status.
 
-**`.env`** — Stores local environment variables and secrets. This file must not be pushed to GitHub.
+**`docs/DRUGREMINDER_PROJECT_LEARNING_GUIDE.md`** — Detailed beginner-friendly project explanation, decisions, problems, fixes, testing and lessons.
 
-**`.gitignore`** — Tells Git which local/generated/sensitive files should not be tracked.
+## Requirements and Installation
 
-**`docs/DRUGREMINDER_PROJECT_LEARNING_GUIDE.md`** — Detailed beginner-friendly project explanation, design decisions, challenges, lessons and file explanations. It is different from this README.
-
-## Requirements
-
-Before running the project locally, install:
-
-- Python 3;
-- Git;
-- a code editor such as VS Code;
-- access to the configured Supabase project (for database/authentication functionality).
-
-On Ubuntu/Linux, check Python and Git with:
-
-```bash
-python3 --version
-git --version
-```
-
-## Installation
-
-### 1. Clone the repository
+Before running locally, install Python 3 and Git.
 
 ```bash
 git clone https://github.com/ejembiedwin36-oss/DrugReminder.git
 cd DrugReminder
-```
-
-If the repository is already on your computer, do not clone it again. Open the existing `DrugReminder` folder instead.
-
-### 2. Create a Python virtual environment
-
-```bash
 python3 -m venv venv
-```
-
-### 3. Activate the virtual environment
-
-On Linux/macOS:
-
-```bash
 source venv/bin/activate
-```
-
-When it is active, the terminal normally shows `(venv)` near the prompt.
-
-On Windows PowerShell:
-
-```powershell
-venv\Scripts\Activate.ps1
-```
-
-### 4. Install dependencies
-
-```bash
 python3 -m pip install -r requirements.txt
 ```
 
-The project currently depends on Flask and the Supabase Python client. Their version ranges are defined in `requirements.txt`.
+If the repository is already cloned, do not clone it again. Enter the existing folder, activate its environment and pull safe remote changes when appropriate.
 
 ## Environment Variables
 
-Create a file named `.env` in the project root.
-
-Do **not** commit `.env` to GitHub and do not share its secret values publicly.
-
-The application currently expects these variables:
+Create `.env` in the project root. Never commit it or share its secret values publicly.
 
 ```env
 SUPABASE_URL=your_supabase_project_url
@@ -225,58 +136,21 @@ SUPABASE_KEY=your_supabase_publishable_or_anon_key
 FLASK_SECRET_KEY=your_private_random_flask_secret
 ```
 
-### What they mean
-
-`SUPABASE_URL` tells the application which Supabase project to connect to.
-
-`SUPABASE_KEY` is the client key used by the application to communicate with Supabase. Use the appropriate project client/publishable/anon key for the current setup; do not place privileged server secrets in browser code or documentation.
-
-`FLASK_SECRET_KEY` is used by Flask to protect session data. Use a private, unpredictable value in real deployments.
-
-## How to Run the Application
-
-Make sure you are inside the `DrugReminder` directory and the virtual environment is active.
-
-Run:
+## Running the Application
 
 ```bash
-python3 app.py
-```
-
-Flask should start the development server. The terminal will display the local address. With the current development setup this is normally:
-
-```text
-http://127.0.0.1:5000
-```
-
-Open that address in a browser.
-
-To stop the development server, return to the terminal and press:
-
-```text
-Ctrl + C
-```
-
-### Starting the project again later
-
-You normally only need:
-
-```bash
-cd DrugReminder
 source venv/bin/activate
 python3 app.py
 ```
 
-You do not recreate the virtual environment every time.
+The Flask development server normally runs at `http://127.0.0.1:5000` in the current setup. Stop it with `Ctrl + C`.
 
 ## Basic Application Flow
-
-A simple way to understand the application is:
 
 ```text
 Browser
    ↓
-HTML form/template
+HTML template / form
    ↓
 Flask route (app.py)
    ↓
@@ -284,38 +158,48 @@ Database helper (database.py)
    ↓
 Supabase / PostgreSQL
    ↓
+Database constraints, RLS and secure functions
+   ↓
 Result returns to Flask
    ↓
-Flask renders or redirects to a page
+Flask renders or redirects
 ```
 
-For example, staff registration follows this general flow:
+### Current staff transfer flow
 
 ```text
-Register Staff page
-        ↓
-User fills the form
-        ↓
-Live JavaScript validation
-        ↓
-Form submitted to Flask
-        ↓
-app.py reads the values
-        ↓
-database.py sends data to Supabase
-        ↓
-PostgreSQL checks security/constraints
-        ↓
-Staff is stored
-        ↓
-Staff assignment is created
-        ↓
-User is redirected to the Staff List
+Dashboard
+   ↓
+View Staff
+   ↓
+Staff Details
+   ↓
+Transfer / Change Assignment
+   ↓
+Choose new branch
+   ↓
+Load departments belonging to that branch
+   ↓
+Choose department and role
+   ↓
+Enter transfer reason
+   ↓
+Secure database transfer function
+   ↓
+Close previous assignment
+   ↓
+Update current staff assignment
+   ↓
+Create new assignment-history record
+   ↓
+Return to Staff Details
 ```
 
-## Database and Supabase
+Staff transfers are authorized human administrative actions. DrugReminder records and executes the administrator's selected reassignment; it does not independently decide that an employee should be transferred.
 
-The current database design includes these main concepts:
+## Database and Security
+
+Current core concepts include:
 
 - `hospitals`
 - `hospital_branches`
@@ -324,126 +208,53 @@ The current database design includes these main concepts:
 - `staff`
 - `staff_assignments`
 
-The schema will grow as patient and medication features are implemented.
+Important security principles include authentication, hospital membership, role-based authorization, PostgreSQL constraints, Row Level Security, secure server/database operations, and preservation of important history rather than silently overwriting it.
 
-A key design rule is:
+The staff transfer operation uses a database function so the related history/current-assignment changes are handled together. It verifies the staff member, hospital administrator authorization, target branch/hospital relationship, target department/branch relationship and permitted staff role.
 
-```text
-Hospital
-   ├── Branch
-   │    ├── Department
-   │    └── Staff
-   └── Other Branches
-```
-
-Another hospital has its own separate structure and data.
-
-## Security
-
-DrugReminder handles healthcare-related organizational information, so security must be considered throughout development.
-
-Current security principles include:
-
-- do not commit `.env` files or secrets;
-- authenticate users before protected pages are accessed;
-- use hospital membership and roles for authorization;
-- use Supabase/PostgreSQL Row Level Security to help isolate hospital data;
-- use database constraints to protect data integrity;
-- preserve audit/history information instead of silently overwriting important healthcare events.
-
-The application is still under development and should not yet be treated as a production-certified clinical system.
+DrugReminder is still under development and should not yet be treated as a production-certified clinical system.
 
 ## Development Workflow
 
-The agreed development workflow is:
+The agreed workflow is:
 
 ```text
 Build
   ↓
 Test locally
   ↓
-Verify database/Supabase behavior
+Verify Supabase/database behavior
   ↓
-Commit/push the completed change to GitHub
+Push completed changes to GitHub
   ↓
-Continue to the next feature
+Update documentation
+  ↓
+Continue
 ```
 
-Before pulling GitHub changes onto a computer that may contain manual edits, check:
+Before pulling when local edits may exist, use `git status`. To download completed remote changes after local work is safe, use `git pull origin main`.
 
-```bash
-git status
-```
+## Troubleshooting Lessons
 
-This helps prevent accidental loss of uncommitted local work.
+### Login fields appeared to disappear
+The login page originally did not make authentication failures clear. Error display was improved, which exposed invalid credentials instead of silently appearing to clear the form.
 
-To view the current branch:
+### `Refresh Token: Already Used`
+A stale/reused authentication session can cause Supabase refresh-token errors. Returning to a fresh login/session resolves the authentication state rather than treating the error as a branch/staff problem.
 
-```bash
-git branch --show-current
-```
+### `httpx.ReadTimeout`
+A network/database request can time out. This is different from a validation failure and should not be confused with the database rejecting a transfer.
 
-To download remote changes after local work is safe/committed:
+### Transfer says the assignment is the same
+The database intentionally rejects a transfer when branch, department and role are unchanged. A transfer must represent a real assignment change.
 
-```bash
-git pull origin main
-```
-
-## Troubleshooting
-
-### `python: command not found`
-
-On systems where `python` is not configured as a command, use:
-
-```bash
-python3 app.py
-```
-
-### `ModuleNotFoundError`
-
-Make sure the virtual environment is activated and install dependencies:
-
-```bash
-source venv/bin/activate
-python3 -m pip install -r requirements.txt
-```
-
-### Supabase environment error
-
-If the application reports that `SUPABASE_URL` or `SUPABASE_KEY` must be set, check that `.env` exists in the project root and contains the required values.
-
-Do not paste those secret values into public issues, commits or screenshots.
-
-### Flask page does not reflect a recent change
-
-Restart the Flask development server if necessary, then refresh the browser. For browser-cached frontend files/behavior, a hard refresh can also help.
-
-### Git refuses to pull because local files changed
-
-Do not force or delete the files immediately. Run:
-
-```bash
-git status
-```
-
-Review and protect the local changes before synchronizing with GitHub.
+### Wrong departments after changing branch
+The first transfer form kept the departments loaded for the old branch. The form was corrected so a branch change reloads departments for the newly selected branch only.
 
 ## Project Documentation
 
-The README is the practical front page of the repository: it explains what the project is, its current capabilities, setup, requirements, structure and how to run it.
-
-For the much deeper beginner-friendly explanation of how DrugReminder was designed and built, including challenges, questions, decisions, lessons and detailed file explanations, read:
-
-```text
-docs/DRUGREMINDER_PROJECT_LEARNING_GUIDE.md
-```
-
-That learning guide is intentionally separate from the README and will grow throughout development.
+This README is the practical repository front page. For the detailed beginner-friendly history of the project—including requirements decisions, bugs, fixes, testing and explanations of important files—read `docs/DRUGREMINDER_PROJECT_LEARNING_GUIDE.md`.
 
 ---
 
-## Current Status
-
-**DrugReminder is under active development and is not yet production-ready.**
-
-The goal is to build and verify the system feature by feature, while keeping both the source code and documentation understandable and up to date.
+**Current status:** Hospital/branch/department setup, staff registration/listing/details and the staff transfer/history workflow are functioning and have been tested. The next major development areas are patient management and the medication workflow.
