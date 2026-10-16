@@ -28,7 +28,7 @@
                 <option value="{{ branch.id }}" {% if branch.id == selected_branch_id %}selected{% endif %}>{{ branch.branch_name }}</option>
             {% endfor %}
         </select>
-        <div class="help">Choose the branch where this staff member will now work.</div>
+        <div class="help">Choose the branch where this staff member will now work. The department list will update for that branch.</div>
 
         {% set chosen_department = request.form.get('department_id') if request.method == 'POST' else staff.department_id %}
         <label for="department_id">New Department</label>
@@ -38,6 +38,7 @@
                 <option value="{{ department.id }}" {% if department.id == chosen_department %}selected{% endif %}>{{ department.department_name }}</option>
             {% endfor %}
         </select>
+        <div class="help">Only departments belonging to the selected branch are shown.</div>
 
         {% set chosen_role = request.form.get('role') if request.method == 'POST' else staff.role %}
         <label for="role">Role</label>
@@ -48,15 +49,22 @@
         </select>
 
         <label for="transfer_reason">Transfer Reason</label>
-        <textarea name="transfer_reason" id="transfer_reason" required minlength="3" placeholder="Example: Reassigned to Emergency Department to support staffing needs.">{{ request.form.get('transfer_reason', '') }}</textarea>
+        <textarea name="transfer_reason" id="transfer_reason" required minlength="3" placeholder="Example: Reassigned to another branch to support staffing needs.">{{ request.form.get('transfer_reason', '') }}</textarea>
         <div class="help" id="reason-help">A reason is required so the transfer has an audit history.</div>
 
         <button type="submit">Complete Transfer</button>
     </form>
 
     <script>
+        const branch = document.getElementById('branch_id');
         const reason = document.getElementById('transfer_reason');
         const help = document.getElementById('reason-help');
+
+        branch.addEventListener('change', function () {
+            const params = new URLSearchParams(window.location.search);
+            params.set('branch_id', branch.value);
+            window.location.search = params.toString();
+        });
 
         function validateReason() {
             const value = reason.value.trim();
@@ -74,14 +82,10 @@
 
         reason.addEventListener('input', validateReason);
         document.getElementById('transfer-form').addEventListener('submit', function(event) {
-            if (!validateReason()) {
-                event.preventDefault();
-            }
+            if (!validateReason()) event.preventDefault();
         });
 
-        if (reason.value.trim()) {
-            validateReason();
-        }
+        if (reason.value.trim()) validateReason();
     </script>
 </body>
 </html>
