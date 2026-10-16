@@ -25,6 +25,7 @@
                     <a href="{{ url_for('staff_list', hospital_id=membership.hospital_id) }}">View Staff</a>
                     {% if membership.role == 'hospital_admin' %}
                         <a href="{{ url_for('register_staff_route', hospital_id=membership.hospital_id) }}">Register Staff</a>
+                        <a href="{{ url_for('register_patient_route', hospital_id=membership.hospital_id) }}">Register Patient</a>
                         <a href="{{ url_for('register_branch_route', hospital_id=membership.hospital_id) }}">Register Branch</a>
                     {% endif %}
                 </div>
