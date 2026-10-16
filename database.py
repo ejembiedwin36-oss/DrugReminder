@@ -176,3 +176,18 @@ def transfer_staff(access_token, refresh_token, staff_record_id, branch_id, depa
         "p_role": role,
         "p_transfer_reason": transfer_reason,
     }).execute().data
+
+
+def register_patient(access_token, refresh_token, hospital_id, branch_id, patient_number, full_name, date_of_birth=None, phone=None, email=None, address=None):
+    """Register a patient and initial branch-history record atomically."""
+    client = authenticated_client(access_token, refresh_token)
+    return client.rpc("register_patient", {
+        "p_hospital_id": hospital_id,
+        "p_branch_id": branch_id,
+        "p_patient_number": patient_number,
+        "p_full_name": full_name,
+        "p_date_of_birth": date_of_birth or None,
+        "p_phone": phone,
+        "p_email": email,
+        "p_address": address,
+    }).execute().data
