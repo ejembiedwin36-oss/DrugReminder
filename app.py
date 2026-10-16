@@ -69,9 +69,9 @@ def dashboard():
     try:
         memberships = get_user_memberships(access_token, refresh_token)
         return render_template("dashboard.html", memberships=memberships)
-    except Exception:
-        session.clear()
-        return redirect(url_for("login"))
+    except Exception as error:
+        app.logger.exception("Dashboard failed to load")
+        return f"Dashboard error: {error}", 500
 
 
 @app.route("/register-hospital", methods=["GET", "POST"])
