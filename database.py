@@ -17,8 +17,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 def authenticated_client(access_token, refresh_token):
     """Create a Supabase client using the current user's session."""
     client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    client.auth.set_session(access_token, refresh_token)
-    return client
+    auth_response = client.auth.set_session(access_token, refresh_token)
+    # Supabase may rotate the refresh token. Persist the new pair in the\n    # Flask session so the next request does not reuse a consumed token.\n    if auth_response.session:\n        from flask import has_request_context, session as flask_session\n        if has_request_context():\n            flask_session["access_token"] = auth_response.session.access_token\n            flask_session["refresh_token"] = auth_response.session.refresh_token\n    return client
 
 
 def sign_up(email, password):
