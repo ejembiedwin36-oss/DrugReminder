@@ -36,3 +36,11 @@ This is the chronological working log. Keep the existing [Project Learning Guide
 - **Insights / concepts learned:**
 - **Git commit / PR:**
 - **Remaining risks and next step:**
+
+## 2026-11-08 — Supabase session bug: first code fix
+- **Confirmed cause in code:** `database.py` called `client.auth.set_session(access_token, refresh_token)` on every database request but discarded the returned session. When Supabase rotated the refresh token, Flask kept the old token and reused it.
+- **Code change:** `authenticated_client` now saves both returned tokens back into Flask's session when a request context exists. Commit `a25c028`.
+- **Error handling change:** The dashboard now clears a rejected refresh-token session and redirects to login rather than displaying the raw exception. Other routes may still require the same handling. Commit `6667583`.
+- **Security insight:** Refresh tokens are rotating credentials. Never print or store actual token values in documentation. A fresh login is needed for a session already invalidated.
+- **Verification status:** Changes were pushed to GitHub; no live Flask login test or automated regression test has been run yet. Do not label the bug fully resolved until testing succeeds.
+- **Next:** Pull main, log in, open dashboard repeatedly, test expired/invalid sessions, and verify patient registration. Add consistent session error handling to all protected routes and automated tests.
