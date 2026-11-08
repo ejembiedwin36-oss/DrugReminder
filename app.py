@@ -71,8 +71,13 @@ def dashboard():
         memberships = get_user_memberships(access_token, refresh_token)
         return render_template("dashboard.html", memberships=memberships)
     except Exception as error:
+        error_text = str(error).lower()
+        if "refresh token" in error_text and ("already used" in error_text or "invalid" in error_text or "expired" in error_text):
+            app.logger.warning("Supabase session expired or refresh token was rejected; requiring login")
+            session.clear()
+            return redirect(url_for("login"))
         app.logger.exception("Dashboard failed to load")
-        return f"Dashboard error: {error}", 500
+        return "Dashboard could not be loaded. Please try again later.", 500
 
 
 @app.route("/register-hospital", methods=["GET", "POST"])
